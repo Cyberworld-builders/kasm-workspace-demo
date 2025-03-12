@@ -1,63 +1,48 @@
 #!/bin/bash
-
-# Exit on error
 set -e
 
-# Check if running as root (sudo needed for most steps)
 if [ "$EUID" -ne 0 ]; then
-  echo "Please run with sudo (e.g., sudo ./install_kasm_wsl2.sh)"
-  exit 1
+    echo "Run with sudo"
+    exit 1
 fi
 
-# Update and install prerequisites
-echo "Updating system and installing prerequisites..."
 apt-get update -y
-apt-get install -y curl ca-certificates gnupg lsb-release
+apt-get install -y curl ca-certificates
 
-# # Install Docker if not already present
-# if ! command -v docker &> /dev/null; then
-#   echo "Installing Docker..."
-#   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-#   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-#   apt-get update -y
-#   apt-get install -y docker-ce docker-ce-cli containerd.io
-# fi
+if ! command -v docker &> /dev/null; then
+    echo "Installing Docker..."
+    curl -fsSL https://get.docker.com | sh
+fi
 
-# # Start Docker service
-# service docker start || systemctl start docker
+sudo dockerd &> /dev/null &
+sleep 5
+if ! docker info &> /dev/null; then
+    echo "Docker failed to start"
+    exit 1
+fi
 
-# # Verify Docker is running
-# if ! docker info &> /dev/null; then
-#   echo "Docker failed to start. Check WSL2 configuration."
-#   exit 1
-# fi
+# Add swap space if missing
+if ! swapon -s | grep -q "swapfile"; then
+    echo "Adding swap space..."
+    fallocate -l 4G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+fi
 
-# Set Kasm version
-KASM_VERSION="1.16.1.98d6fa"  # Latest as of now; check kasmweb.com for updates
-
-# Download and install Kasm Workspaces
-echo "Downloading Kasm Workspaces v${KASM_VERSION}..."
+KASM_VERSION="1.16.1.98d6fa"
 cd /tmp
-curl -O https://kasm-static-content.s3.amazonaws.com/kasm_release_${KASM_VERSION}.tar.gz
-tar -xf kasm_release_${KASM_VERSION}.tar.gz
+echo "Downloading Kasm v${KASM_VERSION}..."
+curl -O --retry 3 https://kasm-static-content.s3.amazonaws.com/kasm_release_${KASM_VERSION}.tar.gz
+tar -xzf kasm_release_${KASM_VERSION}.tar.gz
 
-echo "Installing Kasm Workspaces..."
-# Simplified installation command with minimal required flags
-sudo bash kasm_release/install.sh -e
+echo "Installing Kasm..."
+cd kasm_release
+sudo bash install.sh --install-profile noninteractive --admin-password "kasmadmin123" --user-password "kasmuser123" --no-start
 
-# Configure Kasm to bind to all interfaces (needed for WSL2 networking)
-sed -i 's/127.0.0.1:443/0.0.0.0:443/' /opt/kasm/current/conf/app/app.conf || true
+echo "Starting Kasm manually..."
+sudo /opt/kasm/bin/start
 
-# Restart Kasm services
-echo "Restarting Kasm services..."
-/opt/kasm/bin/stop
-/opt/kasm/bin/start
-
-# Get WSL2 IP address
 WSL_IP=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-
-echo "Kasm Workspaces installed!"
-echo "Access it from Windows at: https://${WSL_IP}"
-echo "Default credentials: admin@kasm.local / [check terminal output or reset via CLI]"
-echo "Note: Ignore 'localhost' references; use the IP above in your Windows browser."
-echo "If you see SSL errors, use http:// temporarily or set up a proper cert."
+echo "Kasm installed! Access at: https://${WSL_IP}"
+echo "Credentials: admin@kasm.local / kasmadmin123"
