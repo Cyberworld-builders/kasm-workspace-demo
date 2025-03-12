@@ -33,7 +33,7 @@ apt-get install -y curl ca-certificates gnupg lsb-release
 # fi
 
 # Set Kasm version
-KASM_VERSION="1.15.0.06f00e"  # Latest as of now; check kasmweb.com for updates
+KASM_VERSION="1.16.1.98d6fa"  # Latest as of now; check kasmweb.com for updates
 
 # Download and install Kasm Workspaces
 echo "Downloading Kasm Workspaces v${KASM_VERSION}..."
