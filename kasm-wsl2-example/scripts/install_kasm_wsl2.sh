@@ -14,23 +14,23 @@ echo "Updating system and installing prerequisites..."
 apt-get update -y
 apt-get install -y curl ca-certificates gnupg lsb-release
 
-# Install Docker if not already present
-if ! command -v docker &> /dev/null; then
-  echo "Installing Docker..."
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-  apt-get update -y
-  apt-get install -y docker-ce docker-ce-cli containerd.io
-fi
+# # Install Docker if not already present
+# if ! command -v docker &> /dev/null; then
+#   echo "Installing Docker..."
+#   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+#   echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+#   apt-get update -y
+#   apt-get install -y docker-ce docker-ce-cli containerd.io
+# fi
 
-# Start Docker service
-service docker start || systemctl start docker
+# # Start Docker service
+# service docker start || systemctl start docker
 
-# Verify Docker is running
-if ! docker info &> /dev/null; then
-  echo "Docker failed to start. Check WSL2 configuration."
-  exit 1
-fi
+# # Verify Docker is running
+# if ! docker info &> /dev/null; then
+#   echo "Docker failed to start. Check WSL2 configuration."
+#   exit 1
+# fi
 
 # Set Kasm version
 KASM_VERSION="1.15.0.06f00e"  # Latest as of now; check kasmweb.com for updates
