@@ -104,6 +104,12 @@ echo "Note: Ignore 'localhost' references; use the IP above in your Windows brow
 echo "If you see SSL errors, use http:// temporarily or set up a proper cert."
 ```
 
+> **Note:** *Make sure you make the script executable.*
+
+```sh
+sudo chmod +x scripts/install_kasm_wsl2.sh
+```
+
 ---
 
 ### Step 2: Run the Setup
