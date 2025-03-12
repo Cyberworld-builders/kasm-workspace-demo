@@ -42,7 +42,8 @@ curl -O https://kasm-static-content.s3.amazonaws.com/kasm_release_${KASM_VERSION
 tar -xf kasm_release_${KASM_VERSION}.tar.gz
 
 echo "Installing Kasm Workspaces..."
-bash kasm_release/install.sh --accept-warning --non-interactive
+# Simplified installation command with minimal required flags
+sudo bash kasm_release/install.sh -e
 
 # Configure Kasm to bind to all interfaces (needed for WSL2 networking)
 sed -i 's/127.0.0.1:443/0.0.0.0:443/' /opt/kasm/current/conf/app/app.conf || true
