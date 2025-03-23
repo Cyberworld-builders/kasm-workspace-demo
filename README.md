@@ -2,7 +2,7 @@
 Experimenting with Kasm Workspace Streaming Platform
 
 
-Yes, you can absolutely test Kasm Workspaces on-premise using Windows 11 with WSL2 and an Ubuntu VM! WSL2 provides a lightweight Linux environment that supports Docker, which is perfect for running Kasm. I’ll walk you through setting it up entirely within your Ubuntu WSL2 instance, keeping it simple and portable. We’ll skip Terraform since this is local, and focus on scripting within WSL2.
+> Yes, you can absolutely test Kasm Workspaces on-premise using Windows 11 with WSL2 and an Ubuntu VM! WSL2 provides a lightweight Linux environment that supports Docker, which is perfect for running Kasm. I’ll walk you through setting it up entirely within your Ubuntu WSL2 instance, keeping it simple and portable. We’ll skip Terraform since this is local, and focus on scripting within WSL2.
 
 ---
 
@@ -102,6 +102,12 @@ echo "Access it from Windows at: https://${WSL_IP}"
 echo "Default credentials: admin@kasm.local / [check terminal output or reset via CLI]"
 echo "Note: Ignore 'localhost' references; use the IP above in your Windows browser."
 echo "If you see SSL errors, use http:// temporarily or set up a proper cert."
+```
+
+> **Note:** *Make sure you make the script executable.*
+
+```sh
+sudo chmod +x scripts/install_kasm_wsl2.sh
 ```
 
 ---
