@@ -31,11 +31,6 @@ variable "vm_username" {
   type        = string
 }
 
-variable "vm_password" {
-  description = "VM Password"
-  type        = string
-}
-
 variable "enable_compute" {
   description = "Enable Compute"
   type        = bool
@@ -106,13 +101,13 @@ resource "azurerm_network_security_group" "demo" {
   resource_group_name = azurerm_resource_group.demo.name
 
   security_rule {
-    name                       = "Allow_RDP"
+    name                       = "Allow_SSH"
     priority                   = 1000
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "3389"
+    destination_port_range     = "22"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
@@ -125,26 +120,32 @@ resource "azurerm_network_interface_security_group_association" "demo" {
   network_security_group_id = azurerm_network_security_group.demo.id
 }
 
-# Create a Windows Virtual Machine
-resource "azurerm_windows_virtual_machine" "demo_vm" {
+# Replace the Windows VM with RHEL VM
+resource "azurerm_linux_virtual_machine" "demo_vm" {
   count                 = var.enable_compute ? 1 : 0
   name                  = "demo-vm"
   resource_group_name   = azurerm_resource_group.demo.name
   location              = azurerm_resource_group.demo.location
-  size                  = "Standard_B2s"  # Small, cost-effective size for demo
-  admin_username        = var.vm_username     # Replace with your preferred username
-  admin_password        = var.vm_password # Replace with a strong password
+  size                  = "Standard_B2s"
+  admin_username        = var.vm_username
+  
+  # Use SSH key instead of password for better security
+  admin_ssh_key {
+    username   = var.vm_username
+    public_key = file("~/.ssh/id_rsa_kasm.pub")  # Make sure to create this key pair
+  }
+
   network_interface_ids = var.enable_compute ? [azurerm_network_interface.demo[0].id] : []
 
   os_disk {
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"  # Cheapest option for demo
+    storage_account_type = "Standard_LRS"
   }
 
   source_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2019-Datacenter"  # Windows Server 2019; adjust as needed
+    publisher = "RedHat"
+    offer     = "RHEL"
+    sku       = "8-gen2"  # RHEL 8
     version   = "latest"
   }
 }
