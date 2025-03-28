@@ -25,3 +25,112 @@ That should cover all of the basic components.
 ### Other Questions and Concerns
 - I'd like to plug the authentication for this into EntraID and set up some test users with basic auth that they can use temporarily for a demo and just disable MFA/SSO for this particular group. That way everyone can log in instantly and get started but feel assured that since it's using Active Directory, they can plug in all of their familiar trusted identity and access management capabilities like SSO and MFA all managed my Microsoft. 
 - Find out 
+
+
+## Infrastructure
+
+An Azure VM running Windows server with the minimum basic infrastructure to connect to the machine with RDP and get started.
+
+```hcl
+# Configure the Azure provider
+provider "azurerm" {
+  features {}
+}
+
+# Reference your existing resource group
+resource "azurerm_resource_group" "existing" {
+  name     = "your-existing-resource-group"  # Replace with your resource group name
+  location = "eastus3"                      # Using East US 3 as per your earlier question
+}
+
+# Create a Virtual Network
+resource "azurerm_virtual_network" "demo_vnet" {
+  name                = "demo-vnet"
+  address_space       = ["10.0.0.0/16"]
+  location            = azurerm_resource_group.existing.location
+  resource_group_name = azurerm_resource_group.existing.name
+}
+
+# Create a Subnet
+resource "azurerm_subnet" "demo_subnet" {
+  name                 = "demo-subnet"
+  resource_group_name  = azurerm_resource_group.existing.name
+  virtual_network_name = azurerm_virtual_network.demo_vnet.name
+  address_prefixes     = ["10.0.1.0/24"]
+}
+
+# Create a Public IP
+resource "azurerm_public_ip" "demo_public_ip" {
+  name                = "demo-public-ip"
+  location            = azurerm_resource_group.existing.location
+  resource_group_name = azurerm_resource_group.existing.name
+  allocation_method   = "Dynamic"  # Dynamic for simplicity; use Static if you need a fixed IP
+}
+
+# Create a Network Security Group (NSG) with RDP rule
+resource "azurerm_network_security_group" "demo_nsg" {
+  name                = "demo-nsg"
+  location            = azurerm_resource_group.existin.location
+  resource_group_name = azurerm_resource_group.existing.name
+
+  security_rule {
+    name                       = "allow-rdp"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"  # RDP port
+    source_address_prefix      = "*"     # Warning: This allows RDP from any IP; restrict in production
+    destination_address_prefix = "*"
+  }
+}
+
+# Create a Network Interface
+resource "azurerm_network_interface" "demo_nic" {
+  name                = "demo-nic"
+  location            = azurerm_resource_group.existing.location
+  resource_group_name = azurerm_resource_group.existing.name
+
+  ip_configuration {
+    name                          = "demo-ipconfig"
+    subnet_id                     = azurerm_subnet.demo_subnet.id
+    private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.demo_public_ip.id
+  }
+}
+
+# Associate the NSG with the Network Interface
+resource "azurerm_network_interface_security_group_association" "demo_nic_nsg" {
+  network_interface_id      = azurerm_network_interface.demo_nic.id
+  network_security_group_id = azurerm_network_security_group.demo_nsg.id
+}
+
+# Create a Windows Virtual Machine
+resource "azurerm_windows_virtual_machine" "demo_vm" {
+  name                  = "demo-vm"
+  resource_group_name   = azurerm_resource_group.existing.name
+  location              = azurerm_resource_group.existing.location
+  size                  = "Standard_B2s"  # Small, cost-effective size for demo
+  admin_username        = "adminuser"     # Replace with your preferred username
+  admin_password        = "P@ssw0rd1234!" # Replace with a strong password
+  network_interface_ids = [azurerm_network_interface.demo_nic.id]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"  # Cheapest option for demo
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"  # Windows Server 2019; adjust as needed
+    version   = "latest"
+  }
+}
+
+# Output the Public IP to connect via RDP
+output "public_ip_address" {
+  value = azurerm_public_ip.demo_public_ip.ip_address
+}
+```
