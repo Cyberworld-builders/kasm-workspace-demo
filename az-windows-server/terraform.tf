@@ -120,7 +120,7 @@ resource "azurerm_network_interface_security_group_association" "demo" {
   network_security_group_id = azurerm_network_security_group.demo.id
 }
 
-# Replace the Windows VM with RHEL VM
+# Replace with Ubuntu VM
 resource "azurerm_linux_virtual_machine" "demo_vm" {
   count                 = var.enable_compute ? 1 : 0
   name                  = "demo-vm"
@@ -129,10 +129,9 @@ resource "azurerm_linux_virtual_machine" "demo_vm" {
   size                  = "Standard_B2s"
   admin_username        = var.vm_username
   
-  # Use SSH key instead of password for better security
   admin_ssh_key {
     username   = var.vm_username
-    public_key = file("~/.ssh/id_rsa_kasm.pub")  # Make sure to create this key pair
+    public_key = file("~/.ssh/id_rsa_kasm.pub")
   }
 
   network_interface_ids = var.enable_compute ? [azurerm_network_interface.demo[0].id] : []
@@ -143,11 +142,14 @@ resource "azurerm_linux_virtual_machine" "demo_vm" {
   }
 
   source_image_reference {
-    publisher = "RedHat"
-    offer     = "RHEL"
-    sku       = "8-gen2"  # RHEL 8
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "22.04-LTS"  # or "20.04-LTS" if you prefer newer version
     version   = "latest"
   }
+
+  # Optional: Add custom data for bootstrap script
+  # custom_data = base64encode(file("bootstrap.sh"))
 }
 
 output "suffix" {
