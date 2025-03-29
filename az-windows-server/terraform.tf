@@ -111,6 +111,30 @@ resource "azurerm_network_security_group" "demo" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
+
+  security_rule {
+    name                       = "Allow_HTTPS"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Allow_Kasm"
+    priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "4902"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 # Network Interface Security Group Association
@@ -139,12 +163,20 @@ resource "azurerm_linux_virtual_machine" "demo_vm" {
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
+    disk_size_gb         = 64
   }
+
+  # source_image_reference {
+  #   publisher = "Canonical"
+  #   offer     = "0001-com-ubuntu-server-jammy"
+  #   sku       = "22_04-lts-gen2"
+  #   version   = "latest"
+  # }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "22.04-LTS"  # or "20.04-LTS" if you prefer newer version
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"  # or "20.04-LTS" if you prefer newer version
     version   = "latest"
   }
 

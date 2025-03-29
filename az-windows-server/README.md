@@ -134,3 +134,34 @@ output "public_ip_address" {
   value = azurerm_public_ip.demo_public_ip.ip_address
 }
 ```
+
+### Installation on Ubuntu
+
+```
+cd /tmp
+curl -O https://kasm-static-content.s3.amazonaws.com/kasm_release_1.16.1.98d6fa.tar.gz
+tar -xf kasm_release_1.16.1.98d6fa.tar.gz
+```
+
+There seem to be issues with allocating the swap file. I had to do it manually before running the install.
+```
+# Create swap file using dd instead of fallocate
+sudo dd if=/dev/zero of=/swapfile bs=1M count=8192   # This creates an 8GB swap file
+
+# Set correct permissions
+sudo chmod 600 /swapfile
+
+# Set up the swap file
+sudo mkswap /swapfile
+
+# Enable the swap
+sudo swapon /swapfile
+
+# Make it permanent by adding to fstab
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+Now Install
+```
+sudo bash kasm_release/install.sh
+```
